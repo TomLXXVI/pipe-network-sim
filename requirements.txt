@@ -7,3 +7,4 @@ ipywidgets>=7.5.1
 ipysheet>=0.4.3
 plotly>=4.8.1
 voila
+ipympl
