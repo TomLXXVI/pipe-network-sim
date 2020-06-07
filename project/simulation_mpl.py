@@ -91,7 +91,7 @@ class PipingNetworkSimulator:
             column_headers=cls.df_floors.columns.to_list()
         )
         cls.table.cells = [ipysheet.column(c, cls.df_floors[column].tolist()) for c, column in enumerate(cls.df_floors)]
-        cls.table.layout.width = '1000px'
+        # cls.table.layout.width = '1000px'
 
     @classmethod
     def _init_plot(cls):
