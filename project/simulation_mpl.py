@@ -42,7 +42,7 @@ class PipingNetworkSimulator:
     @classmethod
     def init(cls):
         cls._init_booster_pump()
-        cls._init_analyzer('.\\input_files\\hardy_gebouw.csv')
+        cls._init_analyzer('./input_files/hardy_gebouw.csv')
         cls.ratio = 100.0 / 7.245
         return cls._create_dashboard()
 
