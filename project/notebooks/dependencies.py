@@ -1,7 +1,7 @@
 import sys
 
 sys.path.extend([
-    "../../jupyter_addons",
+    "../../lib/jupyter_addons",
     "../..",
     "..",
 ])
