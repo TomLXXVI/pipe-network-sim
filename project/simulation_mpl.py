@@ -73,12 +73,14 @@ class PipingNetworkSimulator:
         cls.output = iw.Output()
         cls.output.layout.height='100px'
         container1 = iw.VBox([cls.radio_buttons, cls.run_btn, cls.output])
+        container1.layout.align_content = "space-around"
         container1.layout.justify_content = 'center'
         container2 = iw.HBox([cls.slider_panel, container1])
         cls._init_table()
         cls._init_plot()
-        cls.dashboard = iw.VBox([title, container2, cls.table, cls.fig.canvas])
-        cls.dashboard.layout.justify_content = 'space-around'
+        table_box = iw.HBox([cls.table])
+        table_box.layout.align_content = "space-around"
+        cls.dashboard = iw.VBox([title, container2, table_box, cls.fig.canvas])
         return cls.dashboard
 
     @classmethod
@@ -153,7 +155,6 @@ class PipingNetworkSimulator:
         )
         cls.table.cells = [ipysheet.column(c, cls.df_floors[column].tolist())
                            for c, column in enumerate(cls.df_floors)]
-        # cls.table.layout.width = '1000px'
 
     @classmethod
     def _init_plot(cls):
