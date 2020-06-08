@@ -13,6 +13,7 @@ from lib.pypeflow.core.pipe_schedules import PipeSchedule40
 import lib.quantities as qty
 import lib.nummath.graphing2 as graphing
 
+FLOW_RATE_MAX = 3 * 1.162  # L/s (max. flow rate per storey @ 3 bar )
 MAX_ITERATIONS = 10000
 SINGLE_PUMP = (584555.1552456624, -58652795.301775984, -45981363457.798546)
 PARALLEL_PUMPS = (584555.1552456621, -29326397.650887705, -11495340864.449678)
@@ -31,7 +32,9 @@ class PipingNetworkSimulator:
     ax: mpl_axes.Axes = None
     table: ipysheet.Sheet = None
     sliders: List[iw.FloatSlider] = None
-    slider_panel: iw.VBox = None
+    float_valve_pos: List[iw.FloatText] = None
+    float_flow_rates: List[iw.FloatText] = None
+    slider_panel: iw.HBox = None
     dashboard: iw.VBox = None
     # data objects
     df_building: pd.DataFrame = None
@@ -65,14 +68,16 @@ class PipingNetworkSimulator:
         title = iw.HTML(value="<h1>Piping Network Simulator</h1>")
         cls._init_sliders()
         cls._init_radio_buttons()
-        container1 = iw.VBox([cls.slider_panel, cls.radio_buttons])
         cls._init_run_btn()
         cls.output = iw.Output()
-        container2 = iw.VBox([cls.run_btn, cls.output])
-        container3 = iw.HBox([container1, container2])
+        cls.output.layout.height='100px'
+        container1 = iw.VBox([cls.radio_buttons, cls.run_btn, cls.output])
+        container1.layout.justify_content = 'center'
+        container2 = iw.HBox([cls.slider_panel, container1])
         cls._init_table()
         cls._init_plot()
-        cls.dashboard = iw.VBox([title, container3, cls.table, cls.fig.canvas])
+        cls.dashboard = iw.VBox([title, container2, cls.table, cls.fig.canvas])
+        cls.dashboard.layout.justify_content = 'space-around'
         return cls.dashboard
 
     @classmethod
@@ -86,21 +91,52 @@ class PipingNetworkSimulator:
     @classmethod
     def _init_sliders(cls):
         cls.sliders = []
+        cls.float_valve_pos = []
+        cls.float_flow_rates = []
+        container_valves = [iw.HTML('<b>Valve opening position</b>')]
+        container_flow_rates = [iw.HTML('<b>Expected flow rate</b>')]
         for i in range(8):
             slider_params = {
                 'value': 6.0,
                 'min': 1.0,
                 'max': 100.0,
                 'step': 1.0,
-                'description': f'V{i + 1} [%]',
+                'description': f'L{i + 1}',
                 'disabled': False,
                 'continuous_update': False,
                 'orientation': 'horizontal',
-                'readout': True,
+                'readout': False,
                 'readout_format': '.1f'
             }
-            cls.sliders.append(iw.FloatSlider(**slider_params))
-        cls.slider_panel = iw.VBox(cls.sliders)
+            float_valve_pos_params = {
+                'value': round(6.0, 3)
+            }
+            float_flow_rate_params = {
+                'value': round(6.0 * FLOW_RATE_MAX / 100.0, 3),
+                'disabled': True
+            }
+            fs = iw.FloatSlider(**slider_params)
+            ft_vp = iw.FloatText(**float_valve_pos_params)
+            ft_vp.layout.width = '50px'
+            iw.link((fs, 'value'), (ft_vp, 'value'))
+            ft_fr = iw.FloatText(**float_flow_rate_params)
+            ft_fr.layout.width = '75px'
+            cls.sliders.append(fs)
+            cls.float_valve_pos.append(ft_vp)
+            cls.float_flow_rates.append(ft_fr)
+            h_box = iw.HBox([fs, ft_vp, iw.Label('%')])
+            container_valves.append(h_box)
+            container_flow_rates.append(iw.HBox([ft_fr, iw.Label('L/s')]))
+        cls.slider_panel = iw.HBox([iw.VBox(container_valves), iw.VBox(container_flow_rates)])
+        for slider, float_text in zip(cls.sliders, cls.float_flow_rates):
+            slider.observe(cls._attach_event_handler(float_text), names='value')
+
+    @classmethod
+    def _attach_event_handler(cls, float_text):
+        def handle_slider_change(change):
+            nonlocal float_text
+            float_text.value = round(change['new'] * FLOW_RATE_MAX / 100.0, 3)
+        return handle_slider_change
 
     @classmethod
     def _init_run_btn(cls):
@@ -114,7 +150,8 @@ class PipingNetworkSimulator:
             columns=cls.df_floors.shape[1],
             column_headers=cls.df_floors.columns.to_list()
         )
-        cls.table.cells = [ipysheet.column(c, cls.df_floors[column].tolist()) for c, column in enumerate(cls.df_floors)]
+        cls.table.cells = [ipysheet.column(c, cls.df_floors[column].tolist())
+                           for c, column in enumerate(cls.df_floors)]
         cls.table.layout.width = '1000px'
 
     @classmethod
@@ -136,7 +173,7 @@ class PipingNetworkSimulator:
             p_step=0.5,
             working_point=(cls.V_wp('L/s'), cls.dp_wp('bar')),
             figure_constructs=(cls.fig, cls.ax),
-            sys_curve_labels=('V1', 'eq. network', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8'),
+            sys_curve_labels=('L1', 'eq. network', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8'),
             pump_curve_labels=('single pump', '2 pumps in parallel', '2 pumps in series')
         )
         cls.graph.draw(grid_on=True)
