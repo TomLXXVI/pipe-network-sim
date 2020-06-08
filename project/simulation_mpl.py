@@ -1,10 +1,11 @@
-from typing import List, Tuple
+from typing import List, Tuple, Any
 import pandas as pd
 import ipywidgets as iw
 import matplotlib.figure as mpl_figure
 import matplotlib.axes as mpl_axes
 import matplotlib.pyplot as mpl_plt
 import ipysheet
+from IPython.display import display, HTML
 from lib.pypeflow.analysis import Analyzer
 from lib.pypeflow.utils.system_curve import calculate_system_curves, draw_curves
 from lib.pypeflow.utils.pump_curve import PumpCurve, calculate_pump_curve
@@ -152,7 +153,7 @@ class PipingNetworkSimulator:
         )
         cls.table.cells = [ipysheet.column(c, cls.df_floors[column].tolist())
                            for c, column in enumerate(cls.df_floors)]
-        cls.table.layout.width = '1000px'
+        # cls.table.layout.width = '1000px'
 
     @classmethod
     def _init_plot(cls):
@@ -184,28 +185,32 @@ class PipingNetworkSimulator:
         # event handler for run button click
         button.disabled = True
         # choose random resistance coefficients for the equivalent valves on each floor
-        cls._print_message("Setting new Kv's")
+        cls._print_message(HTML('<p style="color:green;">Setting new Kv coefficients</p>'))
         cls._choose_zetas()
         cls._set_pump(cls.radio_buttons.index)
         # re-analyze the piping network with the new resistance coefficients
-        cls._print_message("Analyzing...")
+        cls._print_message(HTML('<p style="color:green;">Analyzing...</p>'))
         Analyzer.configure_network_from_df(cls.df_building, clear=True)
         try:
             cls._analyze()
         except OverflowError:
-            cls._print_message(
-                f"Could not find a solution after {MAX_ITERATIONS}.\nPlease try again with other values.")
+            cls._print_message(HTML(
+                f'<p style="color:orange;">Could not find a solution after {MAX_ITERATIONS}.<br>'
+                'Please try again with other values.</p>'
+            ))
         except ValueError:
-            cls._print_message(
-                "Could not solve the network with the current combination of valve openings.\n"
-                "Please try again with other values."
-            )
+            cls._print_message(HTML(
+                f'<p style="color:orange;">Could not solve the network with the current combination of valve openings.'
+                f'<br>Please try again with other values.</p>'
+            ))
         else:
             # update dashboard
-            cls._print_message("Updating...")
+            cls._print_message(HTML('<p style="color:green;">Updating...</p>'))
             cls._update_plot()
             cls._update_table()
-            cls._print_message(f"Update finished. Total flow rate is {cls.total_flow_rate:.2f} L/s.")
+            cls._print_message(HTML(
+                f'<p style="color:green;">Update finished. Total flow rate is {cls.total_flow_rate:.2f} L/s.</p>'
+            ))
         finally:
             button.disabled = False
 
@@ -352,7 +357,7 @@ class PipingNetworkSimulator:
         cls.df_building.loc[zeta2_pos, 'zeta'] = zeta_values[:-1]
 
     @classmethod
-    def _print_message(cls, message: str):
+    def _print_message(cls, message: HTML):
         with cls.output:
-            print(message)
+            display(message)
             cls.output.clear_output(wait=True)
