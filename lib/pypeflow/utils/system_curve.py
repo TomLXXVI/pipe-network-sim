@@ -165,21 +165,25 @@ def draw_curves(
     + `p_step`: (*float*) = step between ticks on the pressure axis of the diagram
     + `p_max`: (*float*) = maximum pressure shown on the axis
     + `working_point`: (*Tuple[float, float]*) = working point of the pump (shown as a red dot on the diagram)
+    + `pump_curve_labels`: (*Tuple[str,...]) = legend labels for pump curves
+    + `sys_curve_labels`: (*Tuple[str,...]) = legend labels for system curves
     """
     graph = LineGraph(
         fig_size=kwargs.get('fig_size', (10, 6)),
         dpi=kwargs.get('dpi', 96),
         figure_constructs=kwargs.get('figure_constructs')
     )
+    sys_curve_labels = kwargs.get('sys_curve_labels')
     for i in range(len(sys_curves)):
         graph.add_dataset(
-            name=f'path {i}',
+            name=f'{sys_curve_labels[i]}' if sys_curve_labels else f'path {i}',
             x1_data=sys_curves[i][0],
             y1_data=sys_curves[i][1]
         )
+    pump_curve_labels = kwargs.get('pump_curve_labels')
     for i in range(len(pump_curves)):
         graph.add_dataset(
-            name='pump curve',
+            name=f'{pump_curve_labels[i]}' if pump_curve_labels else f'pump {i}',
             x1_data=pump_curves[i][0],
             y1_data=pump_curves[i][1]
         )
