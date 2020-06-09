@@ -170,7 +170,7 @@ class PipingNetworkSimulator:
             p_step=0.5,
             working_point=(cls.V_wp('L/s'), cls.dp_wp('bar')),
             figure_constructs=(cls.fig, cls.ax),
-            sys_curve_labels=('L1', 'eq. network', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8'),
+            sys_curve_labels=('L1', 'equiv. R_hyd', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8'),
             pump_curve_labels=('single pump', '2 pumps in parallel', '2 pumps in series')
         )
         cls.graph.draw(grid_on=True)
@@ -179,13 +179,21 @@ class PipingNetworkSimulator:
     @classmethod
     def _make_layout(cls):
         box_layout = iw.Layout(
-            width="100%",
-            height="1300px",
+            width="80%",
+            height="1500px",
             display="flex",
             flex_flow="column nowrap",
             justify_content="space-between",
             align_items="stretch",
             align_content="space-between"
+        )
+        row_layout0 = iw.Layout(
+            width="90%",
+            display="flex",
+            flex_flow="row nowrap",
+            justify_content="flex-start",
+            align_items="center",
+            align_content="flex-start"
         )
         row_layout1 = iw.Layout(
             width="70%",
@@ -208,8 +216,26 @@ class PipingNetworkSimulator:
             flex="0 1 auto",
             align_self="flex-start"
         )
+        radio_buttons_layout = iw.Layout(
+            width="auto",
+            flex="0 1 auto",
+            align_self="center"
+        )
+        title = iw.HTML(
+            '<h1>Simulation of a Drinking Water Network in an Apartment Building</h1>'
+            '<p style="font-family:sans-serif; font-size:140%">'
+            'The apartment building counts 8 storeys. The drinking water sub-network on each floor has been reduced'
+            ' to a single "equivalent water tap". By moving the sliders the valve opening on each floor can be set. '
+            'When the "run" button is clicked, the flow rates and pressure drops across the valves are calculated and '
+            'are shown in the table. The diagram shows the working point of the booster pump. One can choose between a '
+            'single pump, 2 identical pumps in parallel or 2 identical pumps in series. The calculated flow rates in '
+            'the table can be compared with the expected flow rates at a design pressure drop of 3 bar and '
+            'corresponding with the valve opening set.</p>'
+        )
+        title.layout = items_layout
+        row0 = iw.Box(children=[title], layout=row_layout0)
         cls.slider_panel.layout = items_layout
-        cls.radio_buttons.layout = items_layout
+        cls.radio_buttons.layout = radio_buttons_layout
         cls.btn_panel.layout = items_layout
         row1 = iw.Box(children=[cls.slider_panel, cls.radio_buttons, cls.btn_panel], layout=row_layout1)
         cls.table.layout = items_layout
@@ -217,7 +243,7 @@ class PipingNetworkSimulator:
         cls.fig.canvas.layout = items_layout
         row3 = iw.Box(children=[cls.fig.canvas], layout=row_layout2)
         cls.dashboard = iw.Box(
-            children=[row1, row2, row3],
+            children=[row0, row1, row2, row3],
             layout=box_layout
         )
 
