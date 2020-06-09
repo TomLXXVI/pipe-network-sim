@@ -262,7 +262,7 @@ class PipingNetworkSimulator:
             cls._analyze()
         except OverflowError:
             cls._print_message(HTML(
-                f'<p style="color:orange;">Could not find a solution after {MAX_ITERATIONS}.<br>'
+                f'<p style="color:orange;">Could not find a solution after {MAX_ITERATIONS} iterations.<br>'
                 'Please try again with other values.</p>'
             ))
         except ValueError:
