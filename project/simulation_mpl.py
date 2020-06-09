@@ -1,4 +1,4 @@
-from typing import List, Tuple, Any
+from typing import List, Tuple
 import pandas as pd
 import ipywidgets as iw
 import matplotlib.figure as mpl_figure
@@ -28,6 +28,7 @@ class PipingNetworkSimulator:
     # widgets
     run_btn: iw.Button = None
     output: iw.Output = None
+    btn_panel: iw.VBox = None
     radio_buttons: iw.RadioButtons = None
     fig: mpl_figure.Figure = None
     ax: mpl_axes.Axes = None
@@ -36,7 +37,7 @@ class PipingNetworkSimulator:
     float_valve_pos: List[iw.FloatText] = None
     float_flow_rates: List[iw.FloatText] = None
     slider_panel: iw.HBox = None
-    dashboard: iw.VBox = None
+    dashboard: iw.Box = None
     # data objects
     df_building: pd.DataFrame = None
     df_floors: pd.DataFrame = None
@@ -66,21 +67,12 @@ class PipingNetworkSimulator:
 
     @classmethod
     def _create_dashboard(cls):
-        title = iw.HTML(value="<h1>Piping Network Simulator</h1>")
-        cls._init_sliders()
+        cls._init_slider_panel()
         cls._init_radio_buttons()
-        cls._init_run_btn()
-        cls.output = iw.Output()
-        cls.output.layout.height='100px'
-        container1 = iw.VBox([cls.radio_buttons, cls.run_btn, cls.output])
-        container1.layout.align_content = "space-around"
-        container1.layout.justify_content = 'center'
-        container2 = iw.HBox([cls.slider_panel, container1])
+        cls._init_btn_panel()
         cls._init_table()
         cls._init_plot()
-        table_box = iw.HBox([cls.table])
-        table_box.layout.align_content = "space-around"
-        cls.dashboard = iw.VBox([title, container2, table_box, cls.fig.canvas])
+        cls._make_layout()
         return cls.dashboard
 
     @classmethod
@@ -92,7 +84,7 @@ class PipingNetworkSimulator:
         )
 
     @classmethod
-    def _init_sliders(cls):
+    def _init_slider_panel(cls):
         cls.sliders = []
         cls.float_valve_pos = []
         cls.float_flow_rates = []
@@ -142,9 +134,12 @@ class PipingNetworkSimulator:
         return handle_slider_change
 
     @classmethod
-    def _init_run_btn(cls):
+    def _init_btn_panel(cls):
         cls.run_btn = iw.Button(description='run')
         cls.run_btn.on_click(cls._run)
+        cls.output = iw.Output()
+        cls.output.layout.width = "200px"
+        cls.btn_panel = iw.VBox([cls.run_btn, cls.output])
 
     @classmethod
     def _init_table(cls):
@@ -180,6 +175,51 @@ class PipingNetworkSimulator:
         )
         cls.graph.draw(grid_on=True)
         mpl_plt.tight_layout()
+
+    @classmethod
+    def _make_layout(cls):
+        box_layout = iw.Layout(
+            width="100%",
+            height="1300px",
+            display="flex",
+            flex_flow="column nowrap",
+            justify_content="space-between",
+            align_items="stretch",
+            align_content="space-between"
+        )
+        row_layout1 = iw.Layout(
+            width="70%",
+            display="flex",
+            flex_flow="row nowrap",
+            justify_content="space-between",
+            align_items="flex-start",
+            align_content="flex-start"
+        )
+        row_layout2 = iw.Layout(
+            width="100%",
+            display="flex",
+            flex_flow="row nowrap",
+            justify_content="flex-start",
+            align_items="center",
+            align_content="flex-start"
+        )
+        items_layout = iw.Layout(
+            width="auto",
+            flex="0 1 auto",
+            align_self="flex-start"
+        )
+        cls.slider_panel.layout = items_layout
+        cls.radio_buttons.layout = items_layout
+        cls.btn_panel.layout = items_layout
+        row1 = iw.Box(children=[cls.slider_panel, cls.radio_buttons, cls.btn_panel], layout=row_layout1)
+        cls.table.layout = items_layout
+        row2 = iw.Box(children=[cls.table], layout=row_layout2)
+        cls.fig.canvas.layout = items_layout
+        row3 = iw.Box(children=[cls.fig.canvas], layout=row_layout2)
+        cls.dashboard = iw.Box(
+            children=[row1, row2, row3],
+            layout=box_layout
+        )
 
     @classmethod
     def _run(cls, button):
@@ -357,6 +397,7 @@ class PipingNetworkSimulator:
         cls.df_building.loc[zeta1_pos, 'zeta'] = zeta_values
         cls.df_building.loc[zeta2_pos, 'zeta'] = zeta_values[:-1]
 
+    # noinspection PyTypeChecker
     @classmethod
     def _print_message(cls, message: HTML):
         with cls.output:
